@@ -182,7 +182,7 @@ function App() {
             behaviour="tap-drag"
             step={1}
             margin={3}
-            limit={30}
+            limit={1000}
             range={{ min: 0, max: videoDuration || 2 }}
             start={[0, videoDuration || 2]}
             connect
