@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import Nouislider from 'nouislider-react';
 import 'nouislider/distribute/nouislider.css';
 import Upload from './components/upload';
+import Logo from './components/logo';
+import {saveAs} from 'file-saver';
 import './App.css';
 
 let ffmpeg; //Store the ffmpeg instance
@@ -13,6 +15,7 @@ function Trim() {
     const [videoFileValue, setVideoFileValue] = useState('');
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
     const [videoTrimmedUrl, setVideoTrimmedUrl] = useState('');
+    const [audioTrimmedUrl, setaudioTrimmedUrl] = useState('');
     const videoRef = useRef();
     let initialSliderValue = 0;
 
@@ -46,8 +49,11 @@ function Trim() {
     //Handle Upload of the video
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
+        console.log(file)
         const blobURL = URL.createObjectURL(file);
+        console.log(blobURL)
         setVideoFileValue(file);
+        console.log(videoFileValue)
         setVideoSrc(blobURL);
     };
 
@@ -107,6 +113,7 @@ function Trim() {
     //Called when handle of the nouislider is being dragged
     const updateOnSliderChange = (values, handle) => {
         setVideoTrimmedUrl('');
+        setaudioTrimmedUrl('');
         let readValue;
         if (handle) {
             readValue = values[handle] | 0;
@@ -166,18 +173,32 @@ function Trim() {
                 'copy',
                 `out.${videoFileType}`,
             );
+
+            //Run the ffmpeg command to extract audio
+            await ffmpeg.run("-i", `out.${videoFileType}`, "-vn", "-acodec", "copy", "out.aac");
+
             //Convert data to url and store in videoTrimmedUrl state
             const data = ffmpeg.FS('readFile', `out.${videoFileType}`);
+
+            const audio = ffmpeg.FS("readFile", "out.aac");
+
             const url = URL.createObjectURL(
                 new Blob([data.buffer], { type: videoFileValue.type }),
             );
+
+            const blobUrl = URL.createObjectURL(
+                new Blob([audio.buffer], { type: "audio/mpeg" })
+            );
+
+            saveAs(new Blob([audio.buffer], { type: "audio/mpeg" }), `trimmed_audio.mp3`);
             setVideoTrimmedUrl(url);
+            setaudioTrimmedUrl(blobUrl)
         }
     };
 
     return (
         <div>
-            <input type="file" onChange={handleFileUpload} />
+
             <button className='flex h-[53px] py-4 px-5 gap-[10px] rounded-lg border-2 items-center border-white' onClick={handleuploadClick}>
                 <Upload />
                 <p className='text-white font-roboto text-sm'>Upload a Video</p>
@@ -185,10 +206,12 @@ function Trim() {
             </button>
             <br />
             {videoSrc.length ? (
-                <div>
-                    <video src={videoSrc} ref={videoRef} onTimeUpdate={handlePauseVideo}>
-                        <source src={videoSrc} type={videoFileValue.type} />
-                    </video>
+                <div className='flex-col'>
+                    <div>
+                        <video style={{ width: '670px' }} src={videoSrc} ref={videoRef} onTimeUpdate={handlePauseVideo}>
+                            <source src={videoSrc} type={videoFileValue.type} />
+                        </video>
+                    </div>
                     <br />
                     <Nouislider
                         behaviour="tap-drag"
@@ -200,18 +223,41 @@ function Trim() {
                         connect
                         onUpdate={updateOnSliderChange}
                     />
+
+                    <p className='text-white text-center font-roboto text-base font-medium leading-normal pt-3'>
+                        Start duration: {convertToHHMMSS(startTime)} &nbsp; End duration:{' '}
+                        {convertToHHMMSS(endTime)}
+                    </p>
+
                     <br />
-                    Start duration: {convertToHHMMSS(startTime)} &nbsp; End duration:{' '}
-                    {convertToHHMMSS(endTime)}
-                    <br />
-                    <button onClick={handlePlay}>Play</button> &nbsp;
-                    <button onClick={handleTrim}>Trim</button>
+                    <div className='flex justify-end space-x-3'>
+
+                        <button className='flex p-4 items-center space-x-3 bg-white bg-opacity-30 rounded-lg' onClick={handlePlay}>
+                            <Logo width={17} height={18} fill={"white"} />
+                            <p className='text-white text-center font-roboto text-base font-medium leading-5'>Play</p>
+                        </button>
+                        
+
+                        <button className='flex p-4 items-center space-x-3 bg-white bg-opacity-30 rounded-lg' onClick={handleTrim}>
+                            <Logo width={17} height={18} fill={"white"} />
+                            <p className='text-white text-center font-roboto text-base font-medium leading-5'>Trim and Find Music</p>
+                        </button>
+
+                    </div>
                     <br />
                     {videoTrimmedUrl && (
-                        <video controls>
+                        <video style={{ width: '670px' }} controls>
                             <source src={videoTrimmedUrl} type={videoFileValue.type} />
                         </video>
                     )}
+                    <br />
+                    {audioTrimmedUrl && (
+                        <audio style={{ width: '670px' }} controls>
+                            <source src={audioTrimmedUrl} type="audio/mpeg" />
+                        </audio>
+                    )}
+
+
                 </div>
             ) : (
                 ''

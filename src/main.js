@@ -75,7 +75,7 @@ function Main() {
                 </div>
                 <div className='text-white text-center font-roboto text-lg font-medium mt-4'>Or</div>
                 <div className='flex flex-col gap-9 justify-center items-center mt-5 mb-52'>
-                    {!isPlayerVisible && (<button className='flex h-[53px] py-4 px-5 gap-[10px] rounded-lg border-2 items-center border-white' onClick={handleuploadClick}>
+                    {/* {!isPlayerVisible && (<button className='flex h-[53px] py-4 px-5 gap-[10px] rounded-lg border-2 items-center border-white' onClick={handleuploadClick}>
                         <Upload />
                         <p className='text-white font-roboto text-sm'>Upload a Video</p>
                         <input id="file-upload" type="file" accept="video/*" style={{ display: 'none' }} onChange={handleVideoChange} />
@@ -93,8 +93,8 @@ function Main() {
                         <Logo width={17} height={18} fill={"white"} />
                         <p className='text-white text-center font-roboto text-base font-medium leading-5'>Trim and Find Music</p>
                     </button>
-                    )}
-                    {/* <Trim /> */}
+                    )} */}
+                    <Trim />
                 </div>
             </div>
             {/* Contact part */}
