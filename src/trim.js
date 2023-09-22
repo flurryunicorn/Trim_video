@@ -3,7 +3,8 @@ import Nouislider from 'nouislider-react';
 import 'nouislider/distribute/nouislider.css';
 import Upload from './components/upload';
 import Logo from './components/logo';
-import {saveAs} from 'file-saver';
+import axios from 'axios';
+import { saveAs } from 'file-saver';
 import './App.css';
 
 let ffmpeg; //Store the ffmpeg instance
@@ -190,9 +191,28 @@ function Trim() {
                 new Blob([audio.buffer], { type: "audio/mpeg" })
             );
 
-            saveAs(new Blob([audio.buffer], { type: "audio/mpeg" }), `trimmed_audio.mp3`);
+            // saveAs(new Blob([audio.buffer], { type: "audio/mpeg" }), `trimmed_audio.wav`);
             setVideoTrimmedUrl(url);
             setaudioTrimmedUrl(blobUrl)
+
+
+            const audioFile = new File([audio], 'output.wav')
+            const formData = new FormData();
+            formData.append(
+                "myFile",
+                audioFile,
+                audioFile.name
+            );
+
+            axios.post("http://166.88.141.97:5000/upload", formData)
+                .then(response => {
+                    console.log(response.data);
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+
+
         }
     };
 
@@ -236,7 +256,7 @@ function Trim() {
                             <Logo width={17} height={18} fill={"white"} />
                             <p className='text-white text-center font-roboto text-base font-medium leading-5'>Play</p>
                         </button>
-                        
+
 
                         <button className='flex p-4 items-center space-x-3 bg-white bg-opacity-30 rounded-lg' onClick={handleTrim}>
                             <Logo width={17} height={18} fill={"white"} />

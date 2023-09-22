@@ -6,6 +6,7 @@ import Trim from './trim';
 import "video-react/dist/video-react.css";
 import Nouislider from 'nouislider-react';
 import 'nouislider/distribute/nouislider.css';
+import axios from 'axios';
 import { Player } from "video-react";
 
 function Main() {
@@ -16,8 +17,27 @@ function Main() {
 
     const handleClick = () => {
         if (inputRef.current) {
+
             setInputValue(inputRef.current.value);
             setVideoSrc(inputRef.current.value);
+            if (videoSrc.includes("youtube")) {
+                axios.get(`http://166.88.141.97:5000/download-youtube-video?url=${videoSrc}`)
+                    .then(response => {
+                        console.log(response.data);
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+
+            } else {
+                axios.get(`http://166.88.141.97:5000/download-tiktok-video?url=${videoSrc}`)
+                    .then(response => {
+                        console.log(response.data);
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            }
             setPlayerVisible(true); // Hide the player
             //console.log(inputValue);
         }
