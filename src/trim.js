@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useRecoilState } from 'recoil'
 import Nouislider from 'nouislider-react';
 import 'nouislider/distribute/nouislider.css';
 import Upload from './components/upload';
 import Logo from './components/logo';
 import axios from 'axios';
 import { saveAs } from 'file-saver';
+import { videoSrcState, videoFileState, playerVisibleState } from './recoil_state';
 import './App.css';
 
 let ffmpeg; //Store the ffmpeg instance
@@ -12,11 +14,13 @@ function Trim() {
     const [videoDuration, setVideoDuration] = useState(0);
     const [endTime, setEndTime] = useState(0);
     const [startTime, setStartTime] = useState(0);
-    const [videoSrc, setVideoSrc] = useState('');
-    const [videoFileValue, setVideoFileValue] = useState('');
+    const [videoSrc, setVideoSrc] = useRecoilState(videoSrcState);
+    const [videoFileValue, setVideoFileValue] = useRecoilState(videoFileState);
+    const [isPlayerVisible, setPlayerVisible] = useRecoilState(playerVisibleState);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
     const [videoTrimmedUrl, setVideoTrimmedUrl] = useState('');
     const [audioTrimmedUrl, setaudioTrimmedUrl] = useState('');
+    const [result, setResult] = useState(Object);
     const videoRef = useRef();
     let initialSliderValue = 0;
 
@@ -56,6 +60,7 @@ function Trim() {
         setVideoFileValue(file);
         console.log(videoFileValue)
         setVideoSrc(blobURL);
+        setPlayerVisible(true);
     };
 
     //Convert the time obtained from the video to HH:MM:SS format
@@ -153,6 +158,7 @@ function Trim() {
     const handleTrim = async () => {
         if (isScriptLoaded) {
             const { name, type } = videoFileValue;
+            console.log("here---", videoFileValue)
             //Write video to memory
             ffmpeg.FS(
                 'writeFile',
@@ -176,12 +182,13 @@ function Trim() {
             );
 
             //Run the ffmpeg command to extract audio
-            await ffmpeg.run("-i", `out.${videoFileType}`, "-vn", "-acodec", "copy", "out.aac");
+            // await ffmpeg.run("-i", `out.${videoFileType}`, "-vn", "-acodec", "copy", "out.aac");
+            await ffmpeg.run("-i", `out.${videoFileType}`, "-q:a", "0", "-map", "a", "out.mp3");
 
             //Convert data to url and store in videoTrimmedUrl state
             const data = ffmpeg.FS('readFile', `out.${videoFileType}`);
 
-            const audio = ffmpeg.FS("readFile", "out.aac");
+            const audio = ffmpeg.FS("readFile", "out.mp3");
 
             const url = URL.createObjectURL(
                 new Blob([data.buffer], { type: videoFileValue.type }),
@@ -196,7 +203,7 @@ function Trim() {
             setaudioTrimmedUrl(blobUrl)
 
 
-            const audioFile = new File([audio], 'output.wav')
+            const audioFile = new File([audio], 'output.mp3')
             const formData = new FormData();
             formData.append(
                 "myFile",
@@ -204,9 +211,10 @@ function Trim() {
                 audioFile.name
             );
 
-            axios.post("http://166.88.141.97:5000/upload", formData)
+            axios.post("http://localhost:5000/upload", formData)
                 .then(response => {
                     console.log(response.data);
+                    setResult(response.data);
                 })
                 .catch(error => {
                     console.log(error);
@@ -219,11 +227,12 @@ function Trim() {
     return (
         <div>
 
-            <button className='flex h-[53px] py-4 px-5 gap-[10px] rounded-lg border-2 items-center border-white' onClick={handleuploadClick}>
+            {!isPlayerVisible && (<button className='flex h-[53px] py-4 px-5 gap-[10px] rounded-lg border-2 items-center border-white' onClick={handleuploadClick}>
                 <Upload />
                 <p className='text-white font-roboto text-sm'>Upload a Video</p>
                 <input id="file-upload" type="file" accept="video/*" style={{ display: 'none' }} onChange={handleFileUpload} />
             </button>
+            )}
             <br />
             {videoSrc.length ? (
                 <div className='flex-col'>
@@ -276,7 +285,23 @@ function Trim() {
                             <source src={audioTrimmedUrl} type="audio/mpeg" />
                         </audio>
                     )}
+                    {audioTrimmedUrl && (
+                        <div className='flex flex-col gap-8 mt-10'>
+                            <p className='font-roboto text-xl  text-white font-bold leading-21 tracking-normal'>Results:</p>
+                            <div className='flex flex-row gap-32'>
+                                <img style={{ width: '124px' }} className='rounded-md' src={result.image}></img>
+                                <div>
+                                    <p className='font-roboto text-xl font-bold leading-21  text-white tracking-normal text-start'>More Informations</p>
+                                    <br />
+                                    <p className='font-roboto text-lg font-bold leading-21  text-white tracking-normal text-start'>Artist: {result.artist}</p>
+                                    <p className='font-roboto text-lg  font-bold leading-21  text-white tracking-normal text-start'>Title: {result.title}</p>
+                                    <p className='font-roboto text-lg font-bold leading-21  text-white tracking-normal text-start'>Album: {result.album}</p>
+                                    <p className='font-roboto text-lg font-bold leading-21  text-white tracking-normal text-start'>Song_link: {result.song_link}</p>
+                                </div>
+                            </div>
+                        </div>
 
+                    )}
 
                 </div>
             ) : (

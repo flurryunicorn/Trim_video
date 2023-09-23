@@ -1,4 +1,5 @@
 import React, { ChangeEvent, useState, useEffect, useRef } from 'react';
+import { useRecoilState } from 'recoil'
 import Icon from './components/icon';
 import Logo from './components/logo';
 import Upload from './components/upload';
@@ -8,29 +9,46 @@ import Nouislider from 'nouislider-react';
 import 'nouislider/distribute/nouislider.css';
 import axios from 'axios';
 import { Player } from "video-react";
+import { videoSrcState,videoFileState,playerVisibleState } from './recoil_state';
 
 function Main() {
-    const [inputValue, setInputValue] = useState('');
-    const inputRef = useRef(null);
-    const [videoSrc, setVideoSrc] = useState(undefined);
-    const [isPlayerVisible, setPlayerVisible] = useState(false);
+    const [videourl, setVideoURL] = useState('');
+    const [videoSrc, setVideoSrc] = useRecoilState(videoSrcState);
+    // const [videoSrc, setVideoSrc] = useState('');
+    const [videoFileValue, setVideoFileValue] = useRecoilState(videoFileState);
+    const [isPlayerVisible, setPlayerVisible] = useRecoilState(playerVisibleState);
+    const validate = (url) => {
 
+    }
     const handleClick = () => {
-        if (inputRef.current) {
-
-            setInputValue(inputRef.current.value);
-            setVideoSrc(inputRef.current.value);
-            if (videoSrc.includes("youtube")) {
-                axios.get(`http://166.88.141.97:5000/download-youtube-video?url=${videoSrc}`)
+        console.log(videourl)
+        if (videourl === '') {
+            alert('Input field is empty');
+        } else {
+            // Handle the url
+            if (videourl.includes("youtube")) {
+                axios.get(`http://localhost:5000/download-youtube-video?url=${videourl}`)
                     .then(response => {
-                        console.log(response.data);
+
+                        const filename = response.data;
+                        setVideoSrc(`http://localhost:5000/file/${filename}`)
+                        console.log(videoSrc);
+                        fetch(`http://localhost:5000/file/${filename}`)
+                            .then(response => response.blob()) // convert to blob
+                            .then(blob => {
+                                // create a new File instance
+                                const file = new File([blob], 'filename', { type: blob.type });
+                                setVideoFileValue(file);
+                                console.log(file);
+                            })
+                            .catch(error => console.error(error));
                     })
                     .catch(error => {
                         console.log(error);
                     });
 
             } else {
-                axios.get(`http://166.88.141.97:5000/download-tiktok-video?url=${videoSrc}`)
+                axios.get(`http://localhost:5000/download-tiktok-video?url=${videourl}`)
                     .then(response => {
                         console.log(response.data);
                     })
@@ -38,13 +56,15 @@ function Main() {
                         console.log(error);
                     });
             }
-            setPlayerVisible(true); // Hide the player
-            //console.log(inputValue);
         }
+
+        setPlayerVisible(true); // Hide the player
+
     }
 
     const handleBackClick = () => {
         setPlayerVisible(false); // Show the player
+        setVideoSrc('');
     }
 
     const handleuploadClick = () => {
@@ -54,6 +74,7 @@ function Main() {
 
     const handleVideoChange = (event) => {
         if (event.target.files && event.target.files.length > 0) {
+            console.log(48327273)
             const file = event.target.files[0];
             const reader = new FileReader();
             console.log(file);
@@ -87,13 +108,13 @@ function Main() {
                 </div>
                 <p className='text-white text-center font-roboto text-base font-medium leading-normal pt-[39px]'>Unveil the Mystery - Input a Video Link and Find Out the Song Title!</p>
                 <div className="flex md:flex-row flex-col gap-[18px] pt-[39px] justify-center">
-                    <input ref={inputRef} className="md:w-[647px] w-[400px] h-[53px] self-center pl-12 bg-white rounded-md border border-gray-300 " type="text" placeholder='Paste your video link here' />
+                    <input value={videourl} onChange={(e) => setVideoURL(e.target.value)} className="md:w-[647px] w-[400px] h-[53px] self-center pl-12 bg-white rounded-md border border-gray-300 " type="text" placeholder='Paste your video link here' />
                     <button className='w-[150px] inline-flex p-4 space-x-3 self-center items-center bg-white bg-opacity-30 rounded-lg' onClick={handleClick}>
                         <Logo width={17} height={18} fill={"white"} />
                         <p className='text-white text-center font-roboto text-base font-medium leading-5'>Find Music</p>
                     </button>
                 </div>
-                <div className='text-white text-center font-roboto text-lg font-medium mt-4'>Or</div>
+                {!isPlayerVisible && (<div className='text-white text-center font-roboto text-lg font-medium mt-4'>Or</div>)}
                 <div className='flex flex-col gap-9 justify-center items-center mt-5 mb-52'>
                     {/* {!isPlayerVisible && (<button className='flex h-[53px] py-4 px-5 gap-[10px] rounded-lg border-2 items-center border-white' onClick={handleuploadClick}>
                         <Upload />

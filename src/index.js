@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { RecoilRoot } from 'recoil';
 import './index.css';
 import App from './App';
 import Main from './main';
@@ -8,7 +9,9 @@ import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
   <React.StrictMode>
-    <Main />
+    <RecoilRoot>
+      <Main />
+    </RecoilRoot>
   </React.StrictMode>,
   document.getElementById('root')
 );
