@@ -9,6 +9,7 @@ import { saveAs } from 'file-saver';
 import { videoSrcState, videoFileState, playerVisibleState } from './recoil_state';
 import './App.css';
 
+
 let ffmpeg; //Store the ffmpeg instance
 function Trim() {
     const [videoDuration, setVideoDuration] = useState(0);
@@ -21,6 +22,7 @@ function Trim() {
     const [videoTrimmedUrl, setVideoTrimmedUrl] = useState('');
     const [audioTrimmedUrl, setaudioTrimmedUrl] = useState('');
     const [result, setResult] = useState(Object);
+    const [resultVisible, setResultVisible] = useState(false)
     const videoRef = useRef();
     let initialSliderValue = 0;
 
@@ -120,6 +122,7 @@ function Trim() {
     const updateOnSliderChange = (values, handle) => {
         setVideoTrimmedUrl('');
         setaudioTrimmedUrl('');
+        setResultVisible(false);
         let readValue;
         if (handle) {
             readValue = values[handle] | 0;
@@ -214,7 +217,14 @@ function Trim() {
             axios.post("http://localhost:5000/upload", formData)
                 .then(response => {
                     console.log(response.data);
-                    setResult(response.data);
+                    if (response.data == '') {
+                        alert("We can't find the music info from the audio")
+                    } else {
+                        console.log(response.data)
+                        setResult(response.data);
+                        setResultVisible(true);
+                    };
+
                 })
                 .catch(error => {
                     console.log(error);
@@ -237,7 +247,7 @@ function Trim() {
             {videoSrc.length ? (
                 <div className='flex-col'>
                     <div>
-                        <video style={{ width: '670px' }} src={videoSrc} ref={videoRef} onTimeUpdate={handlePauseVideo}>
+                        <video className='md:w-[640px] sm:w-full' src={videoSrc} ref={videoRef} onTimeUpdate={handlePauseVideo}>
                             <source src={videoSrc} type={videoFileValue.type} />
                         </video>
                     </div>
@@ -275,28 +285,36 @@ function Trim() {
                     </div>
                     <br />
                     {videoTrimmedUrl && (
-                        <video style={{ width: '670px' }} controls>
+                        <video className='md:w-[640px] sm:w-full' controls>
                             <source src={videoTrimmedUrl} type={videoFileValue.type} />
                         </video>
                     )}
                     <br />
                     {audioTrimmedUrl && (
-                        <audio style={{ width: '670px' }} controls>
+                        <audio className='md:w-[640px] sm:w-full' controls>
                             <source src={audioTrimmedUrl} type="audio/mpeg" />
                         </audio>
                     )}
-                    {audioTrimmedUrl && (
+                    {resultVisible && (
                         <div className='flex flex-col gap-8 mt-10'>
-                            <p className='font-roboto text-xl  text-white font-bold leading-21 tracking-normal'>Results:</p>
-                            <div className='flex flex-row gap-32'>
-                                <img style={{ width: '124px' }} className='rounded-md' src={result.image}></img>
-                                <div>
-                                    <p className='font-roboto text-xl font-bold leading-21  text-white tracking-normal text-start'>More Informations</p>
+                            <p className='font-roboto text-xl  text-white leading-21 tracking-normal pl-5 md:pl-0'>Results:</p>
+                            <div className='flex flex-col md:flex-row gap-5 md:gap-32 pl-5 md:pl-0'>
+                                <div className='flex-col w-[124px] '>
+                                    <img className='w-[124px] h-[124px] rounded-md' src={result.image}></img>
                                     <br />
-                                    <p className='font-roboto text-lg font-bold leading-21  text-white tracking-normal text-start'>Artist: {result.artist}</p>
-                                    <p className='font-roboto text-lg  font-bold leading-21  text-white tracking-normal text-start'>Title: {result.title}</p>
-                                    <p className='font-roboto text-lg font-bold leading-21  text-white tracking-normal text-start'>Album: {result.album}</p>
-                                    <p className='font-roboto text-lg font-bold leading-21  text-white tracking-normal text-start'>Song_link: {result.song_link}</p>
+                                    <p className='font-roboto text-lg leading-21 font-medium text-white tracking-normal text-center'>{result.title}</p>
+                                    <p className='font-roboto text-xs leading-21  text-white tracking-normal text-start'>Artist: {result.artist}</p>
+                                    <p className='font-roboto text-xs leading-21  text-white tracking-normal text-start'>Album: {result.album}</p>
+                                    <p className='font-roboto text-xs leading-21  text-white tracking-normal text-start'>Song_link: <a href={result.song_link}><u>{result.song_link}</u></a></p>
+
+                                </div>
+                                <div className='flex-col w-[400px]'>
+                                    <p className='font-roboto text-xl leading-21  text-white tracking-normal text-start'>Lyrics</p>
+                                    <div className='h-[400px] mt-3 overflow-y-auto whitespace-pre-wrap'>
+                                        <p className='font-roboto text-lg leading-21  text-white tracking-normal text-start'>{result.lyrics}</p>
+                                    </div>
+                                    <br />
+
                                 </div>
                             </div>
                         </div>

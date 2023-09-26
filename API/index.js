@@ -9,6 +9,7 @@ const morgan = require('morgan');
 const path = require('path');
 const ytdl = require('ytdl-core');
 const cheerio = require('cheerio');
+const { getLyrics, getSong } = require('genius-lyrics-api');
 
 // Create Express app
 const app = express();
@@ -52,29 +53,53 @@ app.post('/upload', upload.single('myFile'), async (req, res) => {
   })
 
   let myresult = {};
+  console.log(re.data);
+  if (re.data.result != null) {
+    await axios.get(re.data.result.song_link)
+      .then(response => {
+        const html = response.data;
+        const $ = cheerio.load(html);
 
-  await axios.get(re.data.result.song_link)
-    .then(response => {
-      const html = response.data;
-      const $ = cheerio.load(html);
+        // Find the <img> element
+        const img = $('img');
+        console.log(img.attr('src'));
 
-      // Find the <img> element
-      const img = $('img');
-      console.log(img.attr('src'));
+        myresult.image = img.attr('src');
+      })
+      .catch(console.error);
+    myresult.artist = re.data.result.artist
+    myresult.title = re.data.result.title
 
-      myresult.image = img.attr('src');
-    })
-    .catch(console.error);
-  myresult.artist = re.data.result.artist
-  myresult.title = re.data.result.title
-  myresult.album = re.data.result.album
-  myresult.song_link = re.data.result.song_link
-  if (Object.keys(re.data.result).includes('apple_music')) {
-    myresult.composerName = re.data.result.apple_music.composerName;
+    myresult.album = re.data.result.album
+    myresult.song_link = re.data.result.song_link
+    if (Object.keys(re.data.result).includes('apple_music')) {
+      myresult.composerName = re.data.result.apple_music.composerName;
+      const options = {
+        apiKey: 'nP4woRpAPQQZ4OIDD80RvwiTsky34EjuvVPvX9c4_ZJPxH-TweCl0g3A61E5HXAA',
+        title: myresult.title,
+        artist: myresult.artist,
+        optimizeQuery: true
+      };
+
+      await getLyrics(options).then((lyrics) => {
+        myresult.lyrics = lyrics;
+        console.log(lyrics);
+      });
+
+      await getSong(options).then((song) =>
+        console.log(`${song.id} - ${song.title} - ${song.url} - ${song.albumArt} - ${song.lyrics}`)
+      );
+    } else {
+      myresult.lyrics = "This isn't a song, so you can't find out the lyrics"
+    }
+
+    console.log(re.data.result);
+    res.send(myresult);
+
+  }else{
+    res.send(re.data.result )
   }
 
-  console.log(myresult);
-  res.send(myresult);
 })
 
 

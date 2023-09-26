@@ -20,16 +20,16 @@ function Main() {
     const validate = (url) => {
 
     }
-    const handleClick = () => {
-        console.log(videourl)
-        if (videourl === '') {
+    const handleClick = async() => {
+        console.log('123',videourl)
+        if (videourl == '') {
             alert('Input field is empty');
         } else {
             // Handle the url
-            if (videourl.includes("youtube")) {
-                axios.get(`http://localhost:5000/download-youtube-video?url=${videourl}`)
-                    .then(response => {
 
+            if (videourl.includes("youtube")) {
+                await axios.get(`http://localhost:5000/download-youtube-video?url=${videourl}`)
+                    .then(response => {
                         const filename = response.data;
                         setVideoSrc(`http://localhost:5000/file/${filename}`)
                         console.log(videoSrc);
@@ -45,6 +45,7 @@ function Main() {
                     })
                     .catch(error => {
                         console.log(error);
+                        alert('Enter the link correctly');
                     });
 
             } else {
@@ -108,7 +109,7 @@ function Main() {
                 </div>
                 <p className='text-white text-center font-roboto text-base font-medium leading-normal pt-[39px]'>Unveil the Mystery - Input a Video Link and Find Out the Song Title!</p>
                 <div className="flex md:flex-row flex-col gap-[18px] pt-[39px] justify-center">
-                    <input value={videourl} onChange={(e) => setVideoURL(e.target.value)} className="md:w-[647px] w-[400px] h-[53px] self-center pl-12 bg-white rounded-md border border-gray-300 " type="text" placeholder='Paste your video link here' />
+                    <input value={videourl} onChange={(e) => setVideoURL(e.target.value)} className="md:w-[647px] w-full h-[53px] self-center pl-12 bg-white rounded-md border border-gray-300 " type="text" placeholder='Paste your video link here' />
                     <button className='w-[150px] inline-flex p-4 space-x-3 self-center items-center bg-white bg-opacity-30 rounded-lg' onClick={handleClick}>
                         <Logo width={17} height={18} fill={"white"} />
                         <p className='text-white text-center font-roboto text-base font-medium leading-5'>Find Music</p>
