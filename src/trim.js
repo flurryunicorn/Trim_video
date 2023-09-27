@@ -298,7 +298,7 @@ function Trim() {
                     {resultVisible && (
                         <div className='flex flex-col gap-8 mt-10'>
                             <p className='font-roboto text-xl  text-white leading-21 tracking-normal pl-5 md:pl-0'>Results:</p>
-                            <div className='flex flex-col md:flex-row gap-5 md:gap-32 pl-5 md:pl-0'>
+                            <div className='flex flex-col md:flex-row gap-5 md:gap-28 pl-5 md:pl-0'>
                                 <div className='flex-col w-[124px] '>
                                     <img className='w-[124px] h-[124px] rounded-md' src={result.image}></img>
                                     <br />

@@ -21,15 +21,16 @@ function Main() {
 
     }
     const handleClick = async() => {
-        console.log('123',videourl)
-        if (videourl == '') {
+        setVideoSrc('');
+        console.log(videourl)
+        if (videourl === '') {
             alert('Input field is empty');
         } else {
             // Handle the url
-
             if (videourl.includes("youtube")) {
                 await axios.get(`http://localhost:5000/download-youtube-video?url=${videourl}`)
                     .then(response => {
+
                         const filename = response.data;
                         setVideoSrc(`http://localhost:5000/file/${filename}`)
                         console.log(videoSrc);
@@ -64,6 +65,8 @@ function Main() {
     }
 
     const handleBackClick = () => {
+        setVideoURL('');
+        localStorage.clear();
         setPlayerVisible(false); // Show the player
         setVideoSrc('');
     }

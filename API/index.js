@@ -96,12 +96,66 @@ app.post('/upload', upload.single('myFile'), async (req, res) => {
     console.log(re.data.result);
     res.send(myresult);
 
-  }else{
-    res.send(re.data.result )
+  } else {
+    res.send(re.data.result)
   }
+  // remove video and audio
+  const directory = 'uploads';
+
+  fs.readdir(directory, (err, files) => {
+    if (err) throw err;
+
+    for (const file of files) {
+      fs.unlink(path.join(directory, file), err => {
+        if (err) throw err;
+      });
+    }
+  });
 
 })
 
+
+
+
+app.get('/download-youtube-video', async (req, res) => {
+  try {
+    const youtubeVideoUrl = req.query.url;
+    console.log('working')
+    // const videoUrl = 'https://www.youtube.com/watch?v=G33j5Qi4rE8';
+    console.log(youtubeVideoUrl)
+
+    const info = await ytdl.getInfo(youtubeVideoUrl);
+    // console.log('info: ', info)
+    const videoFormat = ytdl.chooseFormat(info.formats, { quality: 18 });
+    const videoTitle = info.videoDetails.title.replace(/[^\w\s]/gi, ''); // Remove special characters from the title
+    // console.log('videoFormat: ', videoFormat)
+    ytdl(youtubeVideoUrl, { format: videoFormat })
+      .pipe(fs.createWriteStream(`uploads/${videoTitle}.mp4`))
+      .on('finish', () => {
+        res.send(`${videoTitle}.mp4`)
+        console.log('Video downloaded successfully!');
+      })
+      .on('error', (error) => {
+        console.error('Error downloading video:', error);
+      });
+
+    res.header('Content-Disposition', `attachment; filename="${info.videoDetails.title}.mp4"`);
+    // ytdl(videoFormat.url).pipe(res);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('An error occurred while downloading the YouTube video.');
+  }
+});
+
+
+
+app.get("/file/:filename", async (req, res) => {
+  const filePath = path.join(
+    __dirname,
+    `uploads/${req.params.filename}`
+  );
+  res.sendFile(filePath);
+});
 
 
 const shazamAPI = async (req, res) => {
@@ -147,48 +201,6 @@ const shazamAPI = async (req, res) => {
   }
 
 }
-
-app.get('/download-youtube-video', async (req, res) => {
-  try {
-    const youtubeVideoUrl = req.query.url;
-    console.log('working')
-    // const videoUrl = 'https://www.youtube.com/watch?v=G33j5Qi4rE8';
-    console.log(youtubeVideoUrl)
-
-    const info = await ytdl.getInfo(youtubeVideoUrl);
-    // console.log('info: ', info)
-    const videoFormat = ytdl.chooseFormat(info.formats, { quality: 18 });
-    const videoTitle = info.videoDetails.title.replace(/[^\w\s]/gi, ''); // Remove special characters from the title
-    // console.log('videoFormat: ', videoFormat)
-    ytdl(youtubeVideoUrl, { format: videoFormat })
-      .pipe(fs.createWriteStream(`uploads/${videoTitle}.mp4`))
-      .on('finish', () => {
-        res.send(`${videoTitle}.mp4`)
-        console.log('Video downloaded successfully!');
-      })
-      .on('error', (error) => {
-        console.error('Error downloading video:', error);
-      });
-
-    res.header('Content-Disposition', `attachment; filename="${info.videoDetails.title}.mp4"`);
-    // ytdl(videoFormat.url).pipe(res);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('An error occurred while downloading the YouTube video.');
-  }
-});
-
-
-
-app.get("/file/:filename", async (req, res) => {
-  const filePath = path.join(
-    __dirname,
-    `uploads/${req.params.filename}`
-  );
-  res.sendFile(filePath);
-});
-
-
 
 // app.get('/download-tiktok-video', async (req, res) => {
 //   try {
