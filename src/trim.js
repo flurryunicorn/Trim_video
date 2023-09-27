@@ -214,7 +214,7 @@ function Trim() {
                 audioFile.name
             );
 
-            axios.post("http://localhost:5000/upload", formData)
+            axios.post("https://api.waitwhatsong.comupload", formData)
                 .then(response => {
                     console.log(response.data);
                     if (response.data == '') {

@@ -28,13 +28,13 @@ function Main() {
         } else {
             // Handle the url
             if (videourl.includes("youtube")) {
-                await axios.get(`http://localhost:5000/download-youtube-video?url=${videourl}`)
+                await axios.get(`https://api.waitwhatsong.comdownload-youtube-video?url=${videourl}`)
                     .then(response => {
 
                         const filename = response.data;
-                        setVideoSrc(`http://localhost:5000/file/${filename}`)
+                        setVideoSrc(`https://api.waitwhatsong.comfile/${filename}`)
                         console.log(videoSrc);
-                        fetch(`http://localhost:5000/file/${filename}`)
+                        fetch(`https://api.waitwhatsong.comfile/${filename}`)
                             .then(response => response.blob()) // convert to blob
                             .then(blob => {
                                 // create a new File instance
@@ -50,7 +50,7 @@ function Main() {
                     });
 
             } else {
-                axios.get(`http://localhost:5000/download-tiktok-video?url=${videourl}`)
+                axios.get(`https://api.waitwhatsong.comdownload-tiktok-video?url=${videourl}`)
                     .then(response => {
                         console.log(response.data);
                     })
